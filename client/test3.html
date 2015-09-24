@@ -14,17 +14,17 @@
 <div id="container"></div>
 <script type="text/template" id="tmpl">
     <div>
-        <select id="tv-characters"></select> = <span id="sltvalue"></span>
+        <select id="tv-characters"></select> = <span id="sltvalue">Why bind to childs?!</span>
     </div>
     <div>
-        Family: <input id="familyname" type="text"><span id="showname"></span>
-        <input id="address"><br>
+        Family: <input id="familyname" type="text"><span id="showname"></span><br>
         Father: <input id="fatherfirstname"><input id="fatherlastname"><span id="showfather"></span><br>
-        Mother: <input id="motherfirstname"><input id="motherlastname">
+        |-- Phone: <input id="fatherphone"> = <span id="fathphone"></span><br>
+        Mother: <input id="motherfirstname"><input id="motherlastname"><span id="showmother"></span><br>
 
         <div>
-            <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span>
-            <label>Son:</label><input type="text" id="sonfirstname2"> = <span id="sonname2"></span>
+            <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span><br>
+            <label>Daughter:</label><input type="text" id="daughterfirstname"> = <span id="dauname"></span>
         </div>
     </div>
 </script>
@@ -37,52 +37,43 @@
         });
         var Family = Backbone.NestedModel.extend();
 
-        var father = new Person();
-        father.set(
-        {
-            "firstname": "Bob",
-            "lastname": "Grant",
-            "email": "bob.grant@g.com"
-        });
-        var mother = new Person();
-        mother.set(
-        {
-            "firstname": "Annie",
-            "lastname": "Deruk",
-            "email": "annie.deruk@g.com"
-        });
         var son = new Person();
         son.set(
         {
-            "firstname": "Mike",
-            "lastname": "Grant",
-            "email": "mike.grant@g.com"
+            "firstname": "Michael",
+            "lastname": "Mar",
+            "email": "michael.grant@g.com"
         });
         var daughter = new Person();
         daughter.set(
         {
             "firstname": "Marry",
-            "lastname": "Grant",
+            "lastname": "Dot",
             "email": "marry.grant@g.com"
         });
-        var children = new Children();
-        children.add(son);
-        children.add(daughter);
+        var childs = new Children();
+        childs.add(son);
+        childs.add(daughter);
 
         var family = new Family();
-        family.set(
-        {
+        family.set({
             "name": "Bob's family",
             "address": "New zefllte 92 Road Tellet Gooal Fariily.",
             "father": {
                 "firstname": "Bob",
                 "lastname": "Grant",
-                "email": "bob.grant@g.com"
+                contact: {
+                    "phone": "13989898989",
+                    "email": "bob.grant@g.com"
+                }
             },
             "mother": {
                 "firstname": "Annie",
                 "lastname": "Deruk",
-                "email": "annie.deruk@g.com"
+                contact: {
+                    "phone": "13328282828",
+                    "email": "annie.deruk@g.com"
+                }
             },
             children: [
                 {
@@ -97,9 +88,16 @@
                 }
             ]
         });
-        // family.set("father", father);
-        // family.set("mother", mother);
-        // family.set("children", children);
+
+        var mother = {
+            "firstname": "Marian",
+            "lastname": "Tod",
+            contact: {
+                "phone": "13338383838",
+                "email": "marian.tod@g.com"
+            }
+        };
+        family.set("mother", mother);
 
         console.debug(family.get("children[0].firstname"));
         family.set(
@@ -114,16 +112,9 @@
          //  '#firstname': 'father'
 
 
-        var SomeView = Backbone.View.extend(
-        {
-            // tagName: 'div',
-            /* events:
-            {
-                "keydown input#firstname": "changename"
-            }, */
-            formatHeader: function(value, options) {
-                // return options.observe + ': ' + value.get(options.field);
-                return value.get(options.field);
+        var SomeView = Backbone.View.extend({
+            getfullname: function(value, options) {
+                return value?value.firstname + "~" + value.lastname: "undefined or null...";
             },
             bindings:
             {
@@ -136,6 +127,12 @@
                 '#fatherlastname': {
                     observe: 'father.lastname'
                 },
+                '#fatherphone': {
+                    observe: 'father.contact.phone'
+                },
+                '#fathphone': {
+                    observe: 'father.contact.phone'
+                },
                 '#motherfirstname': {
                     observe: 'mother.firstname'
                 },
@@ -143,31 +140,31 @@
                     observe: 'mother.lastname'
                 },
                 '#showfather': {
-                    observe: 'father.firstname'
+                    observe: 'father',
+                    onGet: 'getfullname'
+                },
+                '#showmother': {
+                    observe: 'mother',
+                    onGet: 'getfullname'
                 },
                 '#sonfirstname': {
                     observe: 'children[0].firstname'
                 },
-                '#sonfirstname2': {
-                    observe: 'children',
-                    onGet: function(value, opts){
-                        return value[0].firstname;
-                    },
-                    onSet: function(val, opts){
-                        return [];
-                    }
-                },
                 '#sonname': {
                     observe: 'children[0]',
-                    onGet: function(value, opts){
-                        return value.firstname + "~" + value.lastname
-                    }
+                    onGet: 'getfullname'
                 },
-
-                'select#tv-characters': {
+                '#daughterfirstname': {
+                    observe: 'children[1].firstname'
+                },
+                '#dauname': {
+                    observe: 'children[1]',
+                    onGet: 'getfullname'
+                },
+                '#tv-characters': {
                   observe: 'child',
                   selectOptions: {
-                    collection: 'children',
+                    collection: 'childs',
                     labelPath: 'firstname',
                     valuePath: 'email'
                   }
