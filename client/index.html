@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src='../node_modules/underscore/underscore-min.js'></script>
+    <script src='../node_modules/jquery/dist/jquery.min.js'></script>
+    <script src='../node_modules/backbone/backbone-min.js'></script>
+    <script src='../node_modules/backbone.stickit/backbone.stickit.js'></script>
+    <script src='../node_modules/backbone-nested-models/backbone-nested-models.min.js'></script>
+    <script src='../node_modules/backbone.validation/dist/backbone-validation-min.js'></script>
+</head>
+
+<body>
+    <div id="container"></div>
+    <script id="template" type="text/template">
+        <h1>A family model test</h1>
+        <form id="testform" action="#" method="post">
+            <input name="familyname" type="text">
+            <input id="firstname" name="firstname" type="text">
+            <input id="lastname" name="lastname" type="text">
+            <input id="email" name="email" type="text">
+            <div>
+                <input id="firstname1" name="firstname1" type="text">
+                <input id="lastname1" name="lastname1" type="text">
+                <input id="email1" name="email1" type="text">
+            </div>
+        </form>
+    </script>
+    <script>
+        var Person = Backbone.Model.extend(
+        {});
+        var someone = new Person();
+        someone.set(
+        {
+            "firstname": "Some",
+            "lastname": "One",
+            "email": "some.one@g.com"
+        });
+        var Children = Backbone.Collection.extend(
+        {
+            model: Person
+        });
+        var Family = Backbone.Model.extend(
+        {
+            relations:
+            {
+                "father": Person,
+                "mother": Person,
+                "children": Children
+            }
+        });
+
+        var father = new Person();
+        father.set(
+        {
+            "firstname": "Bob",
+            "lastname": "Grant",
+            "email": "bob.grant@g.com"
+        });
+        var mother = new Person();
+        mother.set(
+        {
+            "firstname": "Annie",
+            "lastname": "Deruk",
+            "email": "annie.deruk@g.com"
+        });
+        var son = new Person();
+        son.set(
+        {
+            "firstname": "Mike",
+            "lastname": "Grant",
+            "email": "mike.grant@g.com"
+        });
+        var daughter = new Person();
+        daughter.set(
+        {
+            "firstname": "Marry",
+            "lastname": "Grant",
+            "email": "marry.grant@g.com"
+        });
+        var children = new Children();
+        children.add(son);
+        children.add(daughter);
+
+        var family = new Family();
+        family.set(
+        {
+            "name": "Bob's family",
+            "address": "New zefllte 92 Road Tellet Gooal Fariily."
+        });
+        family.set("father", father);
+        family.set("mother", mother);
+        family.set("children", children);
+
+        console.debug(family.get("children").at(0).get("firstname"));
+        family.get("children").at(0).set(
+        {
+            "firstname": "Tiger",
+            "lastname": "Dotage"
+        });
+        console.debug(family.get("children").at(0).get("firstname"));
+        console.debug(family.get("children").at(0).get("lastname"));
+        console.debug(family.get("children").at(0).get("email"));
+         //  '#firstname': 'father'
+        console.debug($("#template").html());
+
+         // Binding when rendering
+        var SomeView = Backbone.View.extend(
+        {
+            events:
+            {
+                'click #firstname': 'changename',
+                'change #firstname': 'changename'
+            },
+            changename: function(e)
+            {
+                console.debug("change name...");
+                console.debug($(e.target).val())
+            },
+            render: function()
+            {
+                // this.$el.html($("#template").html());
+                // this.$el.html(
+                //     '<label>Someone:</label><input type="text" id="firstname"> = <span id="showname"></span>'
+                // );
+                this.setElement('<label>Someone:</label><input type="text" id="firstname"> = <span id="showname"></span>');
+                // this.stickit();
+                return this;
+            }
+        });
+
+        var FamilyView = Backbone.View.extend(
+        {
+            initialize: function()
+            {
+                // Backbone.Validation.bind(this);
+            },
+            events:
+            {
+                'keyup #familyname': 'changename'
+            },
+            bindings:
+            {
+                '#familyname':
+                {
+                    oberve: 'name'
+                },
+                '#showname':
+                {
+                    oberve: 'name'
+                }
+            },
+            changename: function(e)
+            {
+                console.debug($(e.target).val())
+            },
+            render: function()
+            {
+                // this.$el.html($("#template").html());
+                this.$el.html(
+                    '<label>family:</label><input type="text" id="familyname"> = <span id="showname"></span>'
+                );
+                this.stickit();
+            }
+        });
+
+         // Binding from outside a view
+        var someView = new SomeView();
+        //{
+        //    model: someone
+        //});
+
+        var viewhtml = someView.render();
+        console.debug(viewhtml);
+        $("#container").append(viewhtml.$el);
+    </script>
+</body>
+
+</html>

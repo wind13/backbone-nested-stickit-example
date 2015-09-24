@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src='../node_modules/underscore/underscore-min.js'></script>
+    <script src='../node_modules/jquery/dist/jquery.min.js'></script>
+    <script src='../node_modules/backbone/backbone-min.js'></script>
+    <script src='../node_modules/backbone.stickit/backbone.stickit.js'></script>
+    <script src='../node_modules/backbone-nested/backbone-nested.js'></script>
+    <script src='../node_modules/backbone.validation/dist/backbone-validation-min.js'></script>
+</head>
+
+<body>
+<div id="container"></div>
+<script type="text/template" id="tmpl">
+    <div>
+        <select id="tv-characters"></select> = <span id="sltvalue"></span>
+    </div>
+    <div>
+        Family: <input id="familyname" type="text"><span id="showname"></span>
+        <input id="address"><br>
+        Father: <input id="fatherfirstname"><input id="fatherlastname"><span id="showfather"></span><br>
+        Mother: <input id="motherfirstname"><input id="motherlastname">
+
+        <div>
+            <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span>
+            <label>Son:</label><input type="text" id="sonfirstname2"> = <span id="sonname2"></span>
+        </div>
+    </div>
+</script>
+<script>
+        var ENTER_KEY = 13;
+        var Person = Backbone.Model.extend();
+        var Children = Backbone.Collection.extend(
+        {
+            model: Person
+        });
+        var Family = Backbone.NestedModel.extend();
+
+        var father = new Person();
+        father.set(
+        {
+            "firstname": "Bob",
+            "lastname": "Grant",
+            "email": "bob.grant@g.com"
+        });
+        var mother = new Person();
+        mother.set(
+        {
+            "firstname": "Annie",
+            "lastname": "Deruk",
+            "email": "annie.deruk@g.com"
+        });
+        var son = new Person();
+        son.set(
+        {
+            "firstname": "Mike",
+            "lastname": "Grant",
+            "email": "mike.grant@g.com"
+        });
+        var daughter = new Person();
+        daughter.set(
+        {
+            "firstname": "Marry",
+            "lastname": "Grant",
+            "email": "marry.grant@g.com"
+        });
+        var children = new Children();
+        children.add(son);
+        children.add(daughter);
+
+        var family = new Family();
+        family.set(
+        {
+            "name": "Bob's family",
+            "address": "New zefllte 92 Road Tellet Gooal Fariily.",
+            "father": {
+                "firstname": "Bob",
+                "lastname": "Grant",
+                "email": "bob.grant@g.com"
+            },
+            "mother": {
+                "firstname": "Annie",
+                "lastname": "Deruk",
+                "email": "annie.deruk@g.com"
+            },
+            children: [
+                {
+                    "firstname": "Mike",
+                    "lastname": "Grant",
+                    "email": "mike.grant@g.com"
+                },
+                {
+                    "firstname": "Marry",
+                    "lastname": "Grant",
+                    "email": "marry.grant@g.com"
+                }
+            ]
+        });
+        // family.set("father", father);
+        // family.set("mother", mother);
+        // family.set("children", children);
+
+        console.debug(family.get("children[0].firstname"));
+        family.set(
+        {
+            "children[0].firstname": "Tiger",
+            "children[0].lastname": "Dotage"
+        });
+        console.debug(family.get("father").firstname);
+        console.debug(family.get("children[0].firstname"));
+        console.debug(family.get("children[0].lastname"));
+        console.debug(family.get("children[0].email"));
+         //  '#firstname': 'father'
+
+
+        var SomeView = Backbone.View.extend(
+        {
+            // tagName: 'div',
+            /* events:
+            {
+                "keydown input#firstname": "changename"
+            }, */
+            formatHeader: function(value, options) {
+                // return options.observe + ': ' + value.get(options.field);
+                return value.get(options.field);
+            },
+            bindings:
+            {
+                '#familyname': 'name',
+                '#firstname': 'firstname',
+                '#showname': 'name',
+                '#fatherfirstname': {
+                    observe: 'father.firstname'
+                },
+                '#fatherlastname': {
+                    observe: 'father.lastname'
+                },
+                '#motherfirstname': {
+                    observe: 'mother.firstname'
+                },
+                '#motherlastname': {
+                    observe: 'mother.lastname'
+                },
+                '#showfather': {
+                    observe: 'father.firstname'
+                },
+                '#sonfirstname': {
+                    observe: 'children[0].firstname'
+                },
+                '#sonfirstname2': {
+                    observe: 'children',
+                    onGet: function(value, opts){
+                        return value[0].firstname;
+                    },
+                    onSet: function(val, opts){
+                        return [];
+                    }
+                },
+                '#sonname': {
+                    observe: 'children[0]',
+                    onGet: function(value, opts){
+                        return value.firstname + "~" + value.lastname
+                    }
+                },
+
+                'select#tv-characters': {
+                  observe: 'child',
+                  selectOptions: {
+                    collection: 'children',
+                    labelPath: 'firstname',
+                    valuePath: 'email'
+                  }
+                },
+                '#sltvalue': 'child'
+            },
+            changename: function(e)
+            {
+                console.debug("change name...");
+                console.debug($(e.target).val())
+            },
+            template: _.template($('#tmpl').html()),
+            render: function(model)
+            {
+                this.model = model;
+                this.$el.html(this.template(this.model));
+                this.stickit();
+                return this;
+            },
+            keyAction: function(e) {
+                if (e.which === ENTER_KEY) {
+                    console.debug(this.$el.val());
+                }
+            }
+        });
+
+        var someView = new SomeView();
+        var viewhtml = someView.render(family);
+        $("#container").append(viewhtml.$el);
+
+    </script>
+</body>
+</html>

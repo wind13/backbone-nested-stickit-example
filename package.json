@@ -1,0 +1,22 @@
+{
+  "name": "backbone-nested-stickit",
+  "version": "0.0.1",
+  "description": "An example for backbone-nested-models and backbone-stickit and backbone-validation work together.",
+  "scripts": {
+    "test": "bower install; gulp"
+  },
+  "dependencies": {
+    "backbone": ">=0.9.2",
+    "backbone-nested": "^2.0.4",
+    "backbone-nested-model": "^1.0.0-prerelease",
+    "backbone-nested-models": "^2.0.2",
+    "backbone.stickit": "^0.9.2",
+    "backbone.validation": "^0.7.1",
+    "jquery": ">=1.8.3",
+    "underscore": ">=1.5.0"
+  },
+  "devDependencies": {
+    "bower": "^1.5.2",
+    "gulp": "^3.9.0"
+  }
+}
