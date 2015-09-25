@@ -7,7 +7,7 @@
     <script src='../node_modules/backbone/backbone-min.js'></script>
     <script src='../node_modules/backbone.stickit/backbone.stickit.js'></script>
     <script src='../node_modules/backbone-nested/backbone-nested.js'></script>
-    <script src='../node_modules/backbone.validation/dist/backbone-validation-min.js'></script>
+    <script src='../node_modules/backbone.validation/dist/backbone-validation.js'></script>
 </head>
 
 <body>
@@ -26,16 +26,43 @@
             <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span><br>
             <label>Daughter:</label><input type="text" id="daughterfirstname"> = <span id="dauname"></span>
         </div>
+
+        <div>
+            <label>1 Son:</label><input type="text" id="son1firstname"> = <span id="son1name"></span><br>
+        </div>
     </div>
 </script>
 <script>
         var ENTER_KEY = 13;
-        var Person = Backbone.Model.extend();
+        var Person = Backbone.Model.extend({
+              validation: {
+                "firstname": {
+                    required: true
+                }
+              }
+        });
         var Children = Backbone.Collection.extend(
         {
             model: Person
         });
-        var Family = Backbone.NestedModel.extend();
+        var Family = Backbone.NestedModel.extend({
+              validation: {
+                "name": {
+                  required: true
+                },
+                "father.firstname": {
+                  required: true
+                },
+                "father.contact.email": {
+                    pattern: 'email'
+                },
+                someAttribute: function(value) {
+                  if(value !== 'somevalue') {
+                    return 'Error message';
+                  }
+                }
+              }
+        });
 
         var son = new Person();
         son.set(
@@ -177,6 +204,13 @@
                 console.debug($(e.target).val())
             },
             template: _.template($('#tmpl').html()),
+            events: {
+                "blur input": "valid"
+            },
+            valid: function() {
+                console.debug("valid...");
+                console.debug(this.model.validate());
+            },
             render: function(model)
             {
                 this.model = model;
@@ -193,6 +227,7 @@
 
         var someView = new SomeView();
         var viewhtml = someView.render(family);
+        Backbone.Validation.bind(someView);
         $("#container").append(viewhtml.$el);
 
     </script>

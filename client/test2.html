@@ -6,7 +6,7 @@
     <script src='../node_modules/jquery/dist/jquery.min.js'></script>
     <script src='../node_modules/backbone/backbone-min.js'></script>
     <script src='../node_modules/backbone.stickit/backbone.stickit.js'></script>
-    <script src='../node_modules/backbone-nested-model/lib/model.js'></script>
+    <script src="./js/model.js"></script>
     <script src='../node_modules/backbone.validation/dist/backbone-validation-min.js'></script>
 </head>
 
@@ -14,16 +14,17 @@
 <div id="container"></div>
 <script type="text/template" id="tmpl">
     <div>
-        <select id="tv-characters"></select> = <span id="sltvalue"></span>
+        <select id="tv-characters"></select> = <span id="sltvalue">Why bind to childs?!</span>
     </div>
     <div>
-        Family: <input id="familyname" type="text"><span id="showname"></span>
-        <input id="address"><br>
+        Family: <input id="familyname" type="text"><span id="showname"></span><br>
         Father: <input id="fatherfirstname"><input id="fatherlastname"><span id="showfather"></span><br>
-        Mother: <input id="motherfirstname"><input id="motherlastname">
+        |-- Phone: <input id="fatherphone"> = <span id="fathphone"></span><br>
+        Mother: <input id="motherfirstname"><input id="motherlastname"><span id="showmother"></span><br>
 
         <div>
-            <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span>
+            <label>Son:</label><input type="text" id="sonfirstname"> = <span id="sonname"></span><br>
+            <label>Daughter:</label><input type="text" id="daughterfirstname"> = <span id="dauname"></span>
         </div>
     </div>
 </script>
@@ -34,91 +35,94 @@
         {
             model: Person
         });
-        var Family = Backbone.Model.extend(
-        {
-            relations:
-            {
-                "father": Person,
-                "mother": Person,
-                "children": Children
+        // How to require this module? It need webpack, so give up this.
+        var Family = require('backbone-nested-model').extend({
+            // map attributes to models/collections
+            schema: {
+                father: Person,
+                mother: Person,
+                children: Backbone.Collection
             }
         });
 
-        var father = new Person();
-        father.set(
-        {
-            "firstname": "Bob",
-            "lastname": "Grant",
-            "email": "bob.grant@g.com"
-        });
-        var mother = new Person();
-        mother.set(
-        {
-            "firstname": "Annie",
-            "lastname": "Deruk",
-            "email": "annie.deruk@g.com"
-        });
         var son = new Person();
         son.set(
         {
-            "firstname": "Mike",
-            "lastname": "Grant",
-            "email": "mike.grant@g.com"
+            "firstname": "Michael",
+            "lastname": "Mar",
+            "email": "michael.grant@g.com"
         });
         var daughter = new Person();
         daughter.set(
         {
             "firstname": "Marry",
-            "lastname": "Grant",
+            "lastname": "Dot",
             "email": "marry.grant@g.com"
         });
-        var children = new Children();
-        children.add(son);
-        children.add(daughter);
+        var childs = new Children();
+        childs.add(son);
+        childs.add(daughter);
 
         var family = new Family();
-        family.set(
-        {
+        family.set({
             "name": "Bob's family",
             "address": "New zefllte 92 Road Tellet Gooal Fariily.",
             "father": {
                 "firstname": "Bob",
                 "lastname": "Grant",
-                "email": "bob.grant@g.com"
+                contact: {
+                    "phone": "13989898989",
+                    "email": "bob.grant@g.com"
+                }
             },
             "mother": {
                 "firstname": "Annie",
                 "lastname": "Deruk",
-                "email": "annie.deruk@g.com"
-            }
+                contact: {
+                    "phone": "13328282828",
+                    "email": "annie.deruk@g.com"
+                }
+            },
+            children: [
+                {
+                    "firstname": "Mike",
+                    "lastname": "Grant",
+                    "email": "mike.grant@g.com"
+                },
+                {
+                    "firstname": "Marry",
+                    "lastname": "Grant",
+                    "email": "marry.grant@g.com"
+                }
+            ]
         });
-        // family.set("father", father);
-        // family.set("mother", mother);
-        family.set("children", children);
 
-        console.debug(family.get("children").at(0).get("firstname"));
-        family.get("children").at(0).set(
+        var mother = {
+            "firstname": "Marian",
+            "lastname": "Tod",
+            contact: {
+                "phone": "13338383838",
+                "email": "marian.tod@g.com"
+            }
+        };
+        family.set("mother", mother);
+
+        console.debug(family.get("children[0].firstname"));
+        family.set(
         {
-            "firstname": "Tiger",
-            "lastname": "Dotage"
+            "children[0].firstname": "Tiger",
+            "children[0].lastname": "Dotage"
         });
-        console.debug(family.get("father").get("firstname"));
-        console.debug(family.get("children").at(0).get("firstname"));
-        console.debug(family.get("children").at(0).get("lastname"));
-        console.debug(family.get("children").at(0).get("email"));
+        console.debug(family.get("father").firstname);
+        console.debug(family.get("children[0].firstname"));
+        console.debug(family.get("children[0].lastname"));
+        console.debug(family.get("children[0].email"));
          //  '#firstname': 'father'
 
 
-        var SomeView = Backbone.View.extend(
-        {
-            // tagName: 'div',
-            /* events:
-            {
-                "keydown input#firstname": "changename"
-            }, */
-            formatHeader: function(value, options) {
-                // return options.observe + ': ' + value.get(options.field);
-                return value.get(options.field);
+        var SomeView = Backbone.View.extend({
+            getfullname: function(value, options) {
+                return value?value.firstname + "~" + value.lastname: "undefined or null...";
             },
             bindings:
             {
@@ -126,52 +130,54 @@
                 '#firstname': 'firstname',
                 '#showname': 'name',
                 '#fatherfirstname': {
-                    observe: 'father',
-                    onGet: 'formatHeader',
-                    onSet: function(value, opts){
-                        // return {"firstname": value};
-                        var father = new Person({"firstname": value});
-                        return father;
-                    },
-                    field: 'firstname'
+                    observe: 'father.firstname'
                 },
                 '#fatherlastname': {
-                    observe: 'father',
-                    onGet: 'formatHeader',
-                    field: 'lastname'
+                    observe: 'father.lastname'
+                },
+                '#fatherphone': {
+                    observe: 'father.contact.phone'
+                },
+                '#fathphone': {
+                    observe: 'father.contact.phone'
                 },
                 '#motherfirstname': {
-                    observe: 'mother',
-                    onGet: 'formatHeader',
-                    field: 'firstname'
+                    observe: 'mother.firstname'
                 },
                 '#motherlastname': {
-                    observe: 'mother',
-                    onGet: 'formatHeader',
-                    field: 'lastname'
+                    observe: 'mother.lastname'
                 },
                 '#showfather': {
                     observe: 'father',
-                    onGet: function(value, opts){
-                        return value.get("firstname") + "~" + value.get("lastname");
-                    }
+                    onGet: 'getfullname'
                 },
-
-                'select#tv-characters': {
-                  observe: 'character',
+                '#showmother': {
+                    observe: 'mother',
+                    onGet: 'getfullname'
+                },
+                '#sonfirstname': {
+                    observe: 'children[0].firstname'
+                },
+                '#sonname': {
+                    observe: 'children[0]',
+                    onGet: 'getfullname'
+                },
+                '#daughterfirstname': {
+                    observe: 'children[1].firstname'
+                },
+                '#dauname': {
+                    observe: 'children[1]',
+                    onGet: 'getfullname'
+                },
+                '#tv-characters': {
+                  observe: 'child',
                   selectOptions: {
-                    collection: function() {
-                      return {
-                        'opt_labels': ['Looney Tunes', 'Three Stooges'],
-                        'Looney Tunes': [{id: 1, name: 'Bugs Bunny'}, {id: 2, name: 'Donald Duck'}],
-                        'Three Stooges': [{id: 3, name: 'moe'}, {id: 4, name: 'larry'}, {id: 5, name: 'curly'}]
-                      };
-                    },
-                    labelPath: 'name',
-                    valuePath: 'id'
+                    collection: 'childs',
+                    labelPath: 'firstname',
+                    valuePath: 'email'
                   }
                 },
-                '#sltvalue': 'character.id'
+                '#sltvalue': 'child'
             },
             changename: function(e)
             {
